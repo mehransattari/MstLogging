@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>MST.Logging</PackageId>
+    <Authors>Mehran Sattari</Authors>
+    <Company>MST</Company>
+    <Product>MST.Logging</Product>
+    <Copyright>2024</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://mehransattary.ir/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mehransattari/Mst</RepositoryUrl>
+    <Description>Mehran Sattari Framework</Description>
+    <PackageTags>Base Logging</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+    <PackageIcon>Mst.png</PackageIcon>
+    <PackageIconUrl />
+    <PackageReleaseNotes>Logging</PackageReleaseNotes>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <None Update="Mst.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+  </ItemGroup>
+  
+
+</Project>
