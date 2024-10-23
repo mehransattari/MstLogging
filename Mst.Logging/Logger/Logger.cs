@@ -113,6 +113,7 @@ public abstract class Logger<T> : ILogger<T>
         {
             return;
         }
+
         //Convert currentCulture to english
         var currentCultureInfo = SetCurrentCulture();
 
