@@ -6,6 +6,9 @@ using System.Reflection;
 using System.Text;
 using Mst.Logging.Enums;
 using Mst.Logging.CustomLogs;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 
 namespace Mst.Logging.Logger;
@@ -15,10 +18,10 @@ public abstract class Logger<T> : ILogger<T>
     #region Constructor
     protected Logger(IHttpContextAccessor httpContextAccessor = null)
     {
-        HttpContextAccessor = httpContextAccessor;
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    protected IHttpContextAccessor HttpContextAccessor { get; }
+    protected IHttpContextAccessor _httpContextAccessor { get; }
 
     #endregion
 
@@ -29,59 +32,71 @@ public abstract class Logger<T> : ILogger<T>
 
     #region Main Methods
 
-    public void LogCritical(Exception? exception, string? message = null, 
-                            Hashtable? parameters = null)
+    public void LogCritical(Exception? exception, string? message = "", 
+                            Hashtable? parameters = null,
+                            [CallerMemberName] string methodName = "",
+                            object? DataObject = null)
     {        
         var methodBase = GetMethodBase();
 
         if (methodBase is not null)
         {
-            Log(LogLevelEnum.Critical, methodBase, message, null, parameters);
+            Log(LogLevelEnum.Critical, methodBase, methodName, message, exception, parameters, DataObject);
         }
     }
 
-    public void LogDebug(string message, Hashtable? parameters = null)
+    public void LogDebug(string message, Hashtable? parameters = null,
+                        [CallerMemberName] string methodName = "",
+                        object? DataObject = null)
     {
         var methodBase = GetMethodBase();
         if (methodBase is not null)
         {
-            Log(LogLevelEnum.Debug, methodBase, message, null, parameters);
+            Log(LogLevelEnum.Debug, methodBase, methodName, message, null, parameters, DataObject);
         }
     }
 
-    public void LogError(Exception? exception, string? message = null, Hashtable? parameters = null)
+    public void LogError(Exception? exception, string? message = "",
+                         Hashtable? parameters = null, [CallerMemberName] string methodName = "",
+                         object? DataObject = null)
     {
         var methodBase = GetMethodBase();
         if (methodBase is not null)
         {
-            Log(LogLevelEnum.Error, methodBase, message, null, parameters);
+            Log(LogLevelEnum.Error, methodBase, methodName, message, exception, parameters, DataObject);
         }
     }
 
-    public void LogInformation(string message, Hashtable? parameters = null)
+    public void LogInformation(string message, Hashtable? parameters = null,
+                              [CallerMemberName] string methodName = "",
+                              object? DataObject = null)
     {
         var methodBase = GetMethodBase();
         if (methodBase is not null)
         {
-            Log(LogLevelEnum.Information, methodBase, message, null, parameters);
+            Log(LogLevelEnum.Information, methodBase, methodName, message, null, parameters, DataObject);
         }
     }
 
-    public void LogTrace(string message, Hashtable? parameters = null)
+    public void LogTrace(string message, Hashtable? parameters = null,
+                        [CallerMemberName] string methodName = "",
+                        object? DataObject = null)
     {
         var methodBase = GetMethodBase();
         if (methodBase is not null)
         {
-            Log(LogLevelEnum.Trace, methodBase, message, null, parameters);
+            Log(LogLevelEnum.Trace, methodBase, methodName, message, null, parameters, DataObject);
         }
     }
 
-    public void LogWarning(string message, Hashtable? parameters = null)
+    public void LogWarning(string message, Hashtable? parameters = null,
+                          [CallerMemberName] string methodName = "",
+                          object? DataObject = null)
     {
         var methodBase = GetMethodBase();
         if (methodBase is not null)
         {
-            Log(LogLevelEnum.Warning, methodBase, message, null, parameters);
+            Log(LogLevelEnum.Warning, methodBase, methodName, message, null, parameters, DataObject);
         }
     }
 
@@ -105,19 +120,19 @@ public abstract class Logger<T> : ILogger<T>
 
     public void Log(LogLevelEnum logLevel,
                        MethodBase methodBase,
+                       string methodNameReceive,
                        string message,
                        Exception? exception,
-                       Hashtable? parameters)
+                       Hashtable? parameters, 
+                       object? DataObject = null)
     {
-        if (exception == null && string.IsNullOrWhiteSpace(message))
-        {
-            return;
-        }
+        if (exception == null && string.IsNullOrWhiteSpace(message))      
+            return;      
 
         //Convert currentCulture to english
         var currentCultureInfo = SetCurrentCulture();
 
-        var log = SetLog(logLevel, methodBase, message, exception, parameters);
+        var log = SetLog(logLevel, methodBase, methodNameReceive, message, exception, parameters, DataObject);
 
         //Log main
         LogByFavoriteLibrary(log: log, exception: exception);
@@ -129,24 +144,32 @@ public abstract class Logger<T> : ILogger<T>
 
     public Log SetLog(LogLevelEnum logLevel,
                        MethodBase methodBase,
+                       string methodNameReceive,
                        string message,
                        Exception? exception,
-                       Hashtable? parameters)
+                       Hashtable? parameters, 
+                       object? DataObject = null)
     {
-        Log log = new Log();
+        var log = new Log
+        {
+            Level = logLevel,
+            ClassName = typeof(T).Name,
+            MethodName = methodBase.Name,
+            MethodNameReceive = methodNameReceive,
+            Namespace = typeof(T).Namespace ?? "Unknown Namespace",
+            Message = message,
+            Exceptions = GetExceptionsCustom(exception),
+            Parameters = GetParameters(parameters),
+            Data = DataObject is not null ? JsonSerializer.Serialize(DataObject) : null
+        };
 
-        log.Level = logLevel;
-        log.ClassName = typeof(T).Name;
-        log.MethodName = methodBase.Name;
-        log.Namespace = typeof(T).Namespace ?? "Unknown Namespace";
-        log.Message = message;
-        log.Exceptions = GetExceptions(exception: exception);
-        log.Parameters = GetParameters(parameters: parameters);
-
-        log.RemoteIP = HttpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown RemoteIP";
-        log.Username = HttpContextAccessor?.HttpContext?.User?.Identity?.Name ?? "Unknown Username";
-        log.RequestPath = HttpContextAccessor?.HttpContext?.Request?.Path ?? "Unknown RequestPath";
-        log.HttpReferrer = HttpContextAccessor?.HttpContext?.Request?.Headers["Referer"] ?? "Unknown HttpReferrer";
+        if (_httpContextAccessor?.HttpContext != null)
+        {
+            log.RemoteIP = _httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString() ?? "Unknown RemoteIP";
+            log.Username = _httpContextAccessor.HttpContext.User?.Identity?.Name ?? "Unknown Username";
+            log.RequestPath = _httpContextAccessor.HttpContext.Request?.Path ?? "Unknown RequestPath";
+            log.HttpReferrer = _httpContextAccessor.HttpContext.Request?.Headers["Referer"].ToString() ?? "Unknown HttpReferrer";
+        }
 
         return log;
     }
@@ -167,6 +190,23 @@ public abstract class Logger<T> : ILogger<T>
     #endregion
 
     #region virtual Methods
+
+    public ExceptionsCustom? GetExceptionsCustom(Exception? exception)
+    {
+        if (exception is null)
+            return null;
+
+        var exceptionInfo = new ExceptionsCustom
+        {
+            ExceptionType = exception.GetType().Name,
+            Message = exception.Message,
+            StackTrace = exception?.StackTrace?? "UNKNOWN",
+            InnerException = exception?.InnerException != null ? GetExceptionsCustom(exception.InnerException) : null,
+            Data = exception.Data.Count > 0 ? exception.Data : null
+        };
+
+        return exceptionInfo;
+    }
 
     public virtual string GetExceptions(Exception? exception)
     {

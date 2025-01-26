@@ -7,156 +7,68 @@ public class Log : ILog
 {
     public LogLevelEnum Level { get; set; }
 
-    public string Namespace { get; set; }
+    public string? Namespace { get; set; }
+    public string? ClassName { get; set; }
+    public string? MethodName { get; set; }
+    public string? MethodNameReceive { get; set; }
 
-    public string ClassName { get; set; }
+    public string? RemoteIP { get; set; }
+    public string? Username { get; set; }
+    public string? RequestPath { get; set; }
+    public string? HttpReferrer { get; set; }
 
-    public string MethodName { get; set; }
+    public string? Message { get; set; }
+    public string? Parameters { get; set; }
+    public ExceptionsCustom? Exceptions { get; set; }
 
+    public Object Data { get; set; }
 
-
-    public string RemoteIP { get; set; }
-
-    public string Username { get; set; }
-
-    public string RequestPath { get; set; }
-
-    public string HttpReferrer { get; set; }
-
-
-
-    public string Message { get; set; }
-
-    public string Parameters { get; set; }
-
-    public string Exceptions { get; set; }
-
-
-    //public override string ToString()
-    //{
-    //    System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder();
-
-    //    //stringBuilder.Append($"<Level>{ Level }</Level>");
-
-    //    stringBuilder.Append($"<{nameof(Level)}>{Level}</{nameof(Level)}>");
-
-
-
-    //    if (string.IsNullOrWhiteSpace(Namespace))
-    //    {
-    //        stringBuilder.Append($"<{nameof(Namespace)}>NULL</{nameof(Namespace)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(Namespace)}>{Namespace}</{nameof(Namespace)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(ClassName))
-    //    {
-    //        stringBuilder.Append($"<{nameof(ClassName)}>NULL</{nameof(ClassName)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(ClassName)}>{ClassName}</{nameof(ClassName)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(MethodName))
-    //    {
-    //        stringBuilder.Append($"<{nameof(MethodName)}>NULL</{nameof(MethodName)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(MethodName)}>{MethodName}</{nameof(MethodName)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(RemoteIP))
-    //    {
-    //        stringBuilder.Append($"<{nameof(RemoteIP)}>NULL</{nameof(RemoteIP)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(RemoteIP)}>{RemoteIP}</{nameof(RemoteIP)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(RequestPath))
-    //    {
-    //        stringBuilder.Append($"<{nameof(RequestPath)}>NULL</{nameof(RequestPath)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(RequestPath)}>{RequestPath}</{nameof(RequestPath)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(HttpReferrer))
-    //    {
-    //        stringBuilder.Append($"<{nameof(HttpReferrer)}>NULL</{nameof(HttpReferrer)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(HttpReferrer)}>{HttpReferrer}</{nameof(HttpReferrer)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(Username))
-    //    {
-    //        stringBuilder.Append($"<{nameof(Username)}>NULL</{nameof(Username)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(Username)}>{Username}</{nameof(Username)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(Message))
-    //    {
-    //        stringBuilder.Append($"<{nameof(Message)}>NULL</{nameof(Message)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(Message)}>{Message}</{nameof(Message)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(Exceptions))
-    //    {
-    //        stringBuilder.Append($"<{nameof(Exceptions)}>NULL</{nameof(Exceptions)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(Exceptions)}>{Exceptions}</{nameof(Exceptions)}>");
-    //    }
-
-    //    if (string.IsNullOrWhiteSpace(Parameters))
-    //    {
-    //        stringBuilder.Append($"<{nameof(Parameters)}>NULL</{nameof(Parameters)}>");
-    //    }
-    //    else
-    //    {
-    //        stringBuilder.Append($"<{nameof(Parameters)}>{Parameters}</{nameof(Parameters)}>");
-    //    }
-
-    //    string result =
-    //        stringBuilder.ToString();
-
-    //    return result;
-
-    //}
+    public string ToJson()
+    {
+        return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+    }
 
     public override string ToString()
     {
         var logObject = new
         {
-            Level = Enum.GetName(Level),
-            Namespace = string.IsNullOrWhiteSpace(Namespace) ? "NULL" : Namespace,
-            ClassName = string.IsNullOrWhiteSpace(ClassName) ? "NULL" : ClassName,
-            MethodName = string.IsNullOrWhiteSpace(MethodName) ? "NULL" : MethodName,
-            RemoteIP = string.IsNullOrWhiteSpace(RemoteIP) ? "NULL" : RemoteIP,
-            RequestPath = string.IsNullOrWhiteSpace(RequestPath) ? "NULL" : RequestPath,
-            HttpReferrer = string.IsNullOrWhiteSpace(HttpReferrer) ? "NULL" : HttpReferrer,
-            Username = string.IsNullOrWhiteSpace(Username) ? "NULL" : Username,
-            Message = string.IsNullOrWhiteSpace(Message) ? "NULL" : Message,
-            Exceptions = string.IsNullOrWhiteSpace(Exceptions) ? "NULL" : Exceptions,
-            Parameters = string.IsNullOrWhiteSpace(Parameters) ? "NULL" : Parameters
+            Level = Enum.GetName(Level) ?? "UNKNOWN",
+            Namespace = GetValueOrNull(Namespace),
+            ClassName = GetValueOrNull(ClassName),
+            MethodName = GetValueOrNull(MethodName),
+            MethodNameReceive = GetValueOrNull(MethodNameReceive),
+            RemoteIP = GetValueOrNull(RemoteIP),
+            RequestPath = GetValueOrNull(RequestPath),
+            HttpReferrer = GetValueOrNull(HttpReferrer),
+            Username = GetValueOrNull(Username),
+            Message = GetValueOrNull(Message),
+            Exceptions = Exceptions, 
+            Parameters = GetValueOrNull(Parameters),
+            Data = Data,
         };
 
-        return JsonSerializer.Serialize(logObject, new JsonSerializerOptions { WriteIndented = true });
+        var result = logObject.ToJson();
+
+        return result;
     }
 
+    private string GetValueOrNull(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "NULL" : value;
+    }
 }
+
+public static class ObjectExtensions
+{
+    public static string ToJson(this object obj)
+    {
+        if (obj == null)
+            return "{}"; // بازگرداندن یک JSON خالی اگر شیء null باشد
+
+        return JsonSerializer.Serialize(obj, new JsonSerializerOptions
+        {
+            WriteIndented = true // برای خوانایی بهتر JSON
+        });
+    }
+}
+
